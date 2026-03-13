@@ -12,9 +12,10 @@ import { mkdir, writeFile, readFile, copyFile, readdir, appendFile, unlink } fro
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, cpSync, statSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
+import { execFileSync } from 'node:child_process';
 import { MODELS } from '../runtime/constants.js';
 import type { SquadConfig, ModelSelectionConfig, RoutingConfig } from '../runtime/config.js';
-import type { WorkstreamDefinition } from '../streams/types.js';
+import type { SubSquadDefinition } from '../streams/types.js';
 
 // ============================================================================
 // Template Resolution
@@ -110,8 +111,8 @@ export interface InitOptions {
   prompt?: string;
   /** If true, disable extraction from consult sessions (read-only consultations) */
   extractionDisabled?: boolean;
-  /** Optional workstream definitions — generates .squad/workstreams.json when provided */
-  streams?: WorkstreamDefinition[];
+  /** Optional SubSquad definitions — generates .squad/workstreams.json when provided */
+  streams?: SubSquadDefinition[];
 }
 
 /**
@@ -595,10 +596,38 @@ export async function initSquad(options: InitOptions): Promise<InitResult> {
   
   const squadConfigPath = join(squadDir, 'config.json');
   if (!existsSync(squadConfigPath)) {
+    // Detect platform from git remote for config
+    let detectedPlatform: string | undefined;
+    try {
+      const remoteUrl = execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: teamRoot, encoding: 'utf-8' }).trim();
+      const remoteUrlLower = remoteUrl.toLowerCase();
+      if (remoteUrlLower.includes('dev.azure.com') || remoteUrlLower.includes('visualstudio.com') || remoteUrlLower.includes('ssh.dev.azure.com')) {
+        detectedPlatform = 'azure-devops';
+      }
+    } catch {
+      // No git remote — skip platform detection
+    }
     const squadConfig: Record<string, unknown> = {
       version: 1,
       teamRoot: teamRoot,
     };
+    if (detectedPlatform) {
+      squadConfig.platform = detectedPlatform;
+    }
+    if (detectedPlatform === 'azure-devops') {
+      // ADO work item defaults — users can customize these:
+      // - org/project: set when work items live in a different project than the repo
+      // - defaultWorkItemType: "User Story", "Scenario", "Bug", etc.
+      // - areaPath: e.g. "MyProject\\Team A" (backslash-separated)
+      // - iterationPath: e.g. "MyProject\\Sprint 1"
+      squadConfig.ado = {
+        // org: "my-org",           // uncomment if work items are in a different org
+        // project: "my-project",   // uncomment if work items are in a different project
+        // defaultWorkItemType: "User Story",
+        // areaPath: "",
+        // iterationPath: "",
+      };
+    }
     // Only include extractionDisabled if explicitly set
     if (options.extractionDisabled) {
       squadConfig.extractionDisabled = true;
@@ -863,10 +892,25 @@ ${projectDescription ? `- **Description:** ${projectDescription}\n` : ''}- **Cre
   }
   
   // -------------------------------------------------------------------------
-  // Copy workflows (optional)
+  // Detect platform from git remote
   // -------------------------------------------------------------------------
   
-  if (includeWorkflows && templatesDir && existsSync(join(templatesDir, 'workflows'))) {
+  let isGitHub = true;
+  try {
+    const remoteUrl = execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: teamRoot, encoding: 'utf-8' }).trim();
+    const remoteUrlLower = remoteUrl.toLowerCase();
+    if (remoteUrlLower.includes('dev.azure.com') || remoteUrlLower.includes('visualstudio.com') || remoteUrlLower.includes('ssh.dev.azure.com')) {
+      isGitHub = false;
+    }
+  } catch {
+    // No git remote — assume GitHub (default)
+  }
+
+  // -------------------------------------------------------------------------
+  // Copy workflows (optional) — skip for ADO repos
+  // -------------------------------------------------------------------------
+  
+  if (includeWorkflows && isGitHub && templatesDir && existsSync(join(templatesDir, 'workflows'))) {
     const workflowsSrc = join(templatesDir, 'workflows');
     const workflowsDest = join(teamRoot, '.github', 'workflows');
     
@@ -894,18 +938,30 @@ ${projectDescription ? `- **Description:** ${projectDescription}\n` : ''}- **Cre
   if (includeMcpConfig) {
     const mcpConfigPath = join(teamRoot, '.copilot', 'mcp-config.json');
     if (!existsSync(mcpConfigPath)) {
-      const mcpSample = {
-        mcpServers: {
-          "EXAMPLE-trello": {
-            command: "npx",
-            args: ["-y", "@trello/mcp-server"],
-            env: {
-              TRELLO_API_KEY: "${TRELLO_API_KEY}",
-              TRELLO_TOKEN: "${TRELLO_TOKEN}"
+      const mcpSample = isGitHub
+        ? {
+            mcpServers: {
+              "EXAMPLE-github": {
+                command: "npx",
+                args: ["-y", "@anthropic/github-mcp-server"],
+                env: {
+                  GITHUB_TOKEN: "${GITHUB_TOKEN}"
+                }
+              }
             }
           }
-        }
-      };
+        : {
+            mcpServers: {
+              "EXAMPLE-azure-devops": {
+                command: "npx",
+                args: ["-y", "@azure/devops-mcp-server"],
+                env: {
+                  AZURE_DEVOPS_ORG: "${AZURE_DEVOPS_ORG}",
+                  AZURE_DEVOPS_PAT: "${AZURE_DEVOPS_PAT}"
+                }
+              }
+            }
+          };
       await mkdir(dirname(mcpConfigPath), { recursive: true });
       await writeFile(mcpConfigPath, JSON.stringify(mcpSample, null, 2) + '\n', 'utf-8');
       createdFiles.push(toRelativePath(mcpConfigPath));
@@ -915,20 +971,20 @@ ${projectDescription ? `- **Description:** ${projectDescription}\n` : ''}- **Cre
   }
   
   // -------------------------------------------------------------------------
-  // Generate .squad/workstreams.json (when streams provided)
+  // Generate .squad/workstreams.json (when SubSquads provided)
   // -------------------------------------------------------------------------
 
   if (options.streams && options.streams.length > 0) {
-    const workstreamsConfig = {
+    const subsquadsConfig = {
       workstreams: options.streams,
       defaultWorkflow: 'branch-per-issue',
     };
     const workstreamsPath = join(squadDir, 'workstreams.json');
-    await writeIfNotExists(workstreamsPath, JSON.stringify(workstreamsConfig, null, 2) + '\n');
+    await writeIfNotExists(workstreamsPath, JSON.stringify(subsquadsConfig, null, 2) + '\n');
   }
 
   // -------------------------------------------------------------------------
-  // Add .squad-workstream to .gitignore
+  // Add .squad-workstream to .gitignore (SubSquad activation file)
   // -------------------------------------------------------------------------
 
   {
@@ -939,7 +995,7 @@ ${projectDescription ? `- **Description:** ${projectDescription}\n` : ''}- **Cre
     }
     if (!currentIgnore.includes(workstreamIgnoreEntry)) {
       const block = (currentIgnore && !currentIgnore.endsWith('\n') ? '\n' : '')
-        + '# Squad: workstream activation file (local to this machine)\n'
+        + '# Squad: SubSquad activation file (local to this machine)\n'
         + workstreamIgnoreEntry + '\n';
       await appendFile(gitignorePath, block);
       createdFiles.push(toRelativePath(gitignorePath));

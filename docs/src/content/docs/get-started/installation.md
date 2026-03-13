@@ -108,15 +108,7 @@ Want the same agents across all your projects?
 squad init --global
 ```
 
-This creates your personal squad directory — a personal team root that any project can inherit from. See [Upstream Inheritance](../features/upstream-inheritance.md) for details.
-
-**Personal squad location by platform:**
-
-| Platform | Path |
-|----------|------|
-| Linux | `~/.config/squad/` |
-| macOS | `~/Library/Application Support/squad/` |
-| Windows | `%APPDATA%\squad\` |
+This creates `~/.squad/` — a personal team root that any project can inherit from. See [Upstream Inheritance](../features/upstream-inheritance.md) for details.
 
 ---
 
