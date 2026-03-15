@@ -4,6 +4,34 @@
 
 ## Learnings
 
+### PR #404 & #403 Quality Review + Test Assertion Fix (2026-03-15T10:55:00Z)
+
+**Context:** Reviewed two PRs from squad agents — #404 (EECOM: cross-platform fixes) and #403 (PAO: docs FAQ).
+
+**PR #404 — Cross-Platform Filename and Config Fixes:**
+- ✅ **Timestamp sanitization:** comms-file-log.ts correctly switched to safeTimestamp() utility (replaces colons with hyphens for Windows)
+- ✅ **No remaining violations:** grep confirmed no toISOString() usage in filename paths across SDK
+- ✅ **teamRoot removal:** Safe change — removed from init.ts to prevent baking absolute paths into config.json. resolution.ts still supports teamRoot for remote/dual-root mode when explicitly configured. Falls through to local mode when omitted.
+- ⚠️ **Test coverage gap:** No unit tests specifically validate safeTimestamp() behavior or Windows filename compatibility
+- **Verdict: GO** — Fixes real bugs, backward-compatible
+
+**PR #403 — FAQ and CLI Guidance:**
+- ✅ **Test discipline:** PAO correctly added 'faq' to EXPECTED_GUIDES array (7 items match disk)
+- ✅ **All links verified:** client-compatibility.md, copilot-coding-agent.md, aspire-dashboard.md, team-setup.md, gitlab-issues.md, disaster-recovery.md all exist
+- ✅ **Content accuracy:** FAQ correctly describes Squad CLI vs GitHub Copilot CLI usage, bot assignment workarounds, triage behavior
+- **Verdict: GO** — DOCS-TEST SYNC rule followed, content accurate
+
+**Test Assertion Sync Fix (dev branch):**
+- Fixed stale EXPECTED_FEATURES array in test/docs-build.test.ts (33 → 34 items)
+- Added missing 'built-in-roles' entry (feature added in PR #368 but test not updated)
+- Committed directly to dev: "test: sync EXPECTED_FEATURES with built-in-roles addition" (da2dc3e)
+- All 23 docs-build tests pass
+
+**CI Failure Diagnosis:**
+Both PRs show CI build failures (missing SDK exports: listRoles, searchRoles, getCategories, getRoleById, generateCharterFromRole). Investigation confirmed this is a **pre-existing issue on dev branch** (CI runs #23109355116, #23108671446 also fail). Local builds succeed. Not introduced by either PR.
+
+**Lesson reinforced:** When reviewing PRs with CI failures, always check if dev branch has the same failures. Don't block PRs for pre-existing platform issues.
+
 ### Name-Agnostic Testing Pattern
 Tests reading live .squad/ files (team.md, routing.md) must assert structure/behavior, not specific agent names. Names change during team rebirths. Two classes of tests: (1) live-file tests — must survive rebirths, use property checks, (2) inline-fixture tests — self-contained, can hardcode names. See ralph-triage.test.ts for the canonical pattern.
 
