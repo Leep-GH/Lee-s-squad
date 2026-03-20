@@ -501,3 +501,65 @@ Prioritize squad.config.ts sync fixes over new commands. Implement in this order
 - Ralph always-on vs opt-in: Make Ralph always-included
 
 **Reference:** Full roadmap at `.squad/identity/sdk-init-implementation-roadmap.md`
+
+---
+
+### 2026-03-20T13:26:45Z: No cron jobs — ever
+**By:** Brady (via Copilot)
+**What:** No cron jobs in GitHub Actions — ever. Cron is permanently disabled in all workflows. We should not be shipping code that has cron turned on by default. It costs too much. This applies to our repo, the product templates, and the docs.
+**Why:** User request — captured for team memory. GitHub Actions cron burns minutes and money. Squad uses event-based triggers and local watch mode instead.
+
+---
+
+### 2026-03-20: CI Lockfile Lint + Edited Trigger
+**By:** Booster (CI/CD Engineer)
+**What:**
+1. Add `edited` to CI pull_request trigger types in `.github/workflows/squad-ci.yml` (types: [opened, synchronize, reopened, edited]) to catch PR retargeting.
+2. Add lockfile lint step before `npm ci` to detect stale nested workspace entries in `package-lock.json` with remediation: `Fix: delete these entries from package-lock.json and run npm install`.
+3. Changed repository default branch from `main` to `dev`.
+**Why:** 
+- PRs retargeted to different base branches need CI retrigger (standard GitHub Actions pattern).
+- Stale nested npm registry entries cause TypeScript type errors that are hard to diagnose; catching at lockfile level gives clear, actionable feedback.
+- Community PRs now naturally target `dev` without manual retargeting.
+
+---
+
+### 2026-03-11T12:10Z: Session handoff — SDKs are next priority
+**By:** Brady (via Copilot)
+**What:** Next session begins with SDK Init PRDs. The unified PRD consolidating #337-#342 is ready for implementation and is the team's top priority.
+**Why:** User request — captured for team memory.
+
+---
+
+### 2026-03-20: Press milestone — GitHub Blog + .NET Rocks!
+**By:** Brady (via Copilot)
+**What:** Squad featured on the GitHub Blog ("How Squad runs coordinated AI agents inside your repository") and .NET Rocks! Episode 1994, both published March 19, 2026. First major press coverage.
+**Why:** Team morale milestone. Validates the "repository-native multi-agent orchestration" positioning. Community visibility will likely drive new issues and contributors.
+
+---
+
+### 2026-03-19: Node 22+ ESM Resolution Fix Strategy
+**By:** Flight (Lead)
+**Date:** 2026-03-19
+**Issue:** #449
+**Status:** Proposed
+**What:** Dual-layer postinstall patching:
+1. Primary fix: Patch `vscode-jsonrpc/package.json` at postinstall to add the `exports` field (modeled on v9.x) to fix ALL subpath import resolution at source.
+2. Backup fix: Keep existing copilot-sdk `session.js` patch as defense-in-depth.
+3. Observability: Add a `squad doctor` check that detects whether `vscode-jsonrpc` has proper exports.
+4. CI: Add Node 22 and Node 24 to the CI smoke test matrix.
+**Why:**
+- `vscode-jsonrpc@8.2.1` lacks an `exports` field; Node 22+ strict ESM resolution rejects `vscode-jsonrpc/node` imports without `.js` extension.
+- Patching the package with missing exports is more robust than chasing individual import sites.
+- `vscode-jsonrpc` v9.x (which has exports) is all pre-release with no stable release timeline.
+- Node 22 is Active LTS — must-support for any package declaring `engines: >=20`.
+**Owners:** GNC (~1 day implementation), Booster (CI matrix), FIDO (ESM import smoke test).
+
+---
+
+### 2026-03-21: Gap analysis verification loop
+**By:** Procedures (Prompt Engineer)
+**What:** After Agent Work now includes Step 1b — Verification. When an issue has `- [ ]` checkboxes, a lightweight verification agent (claude-haiku-4.5, sync, different from the doer) independently checks each item against the work product before the coordinator proceeds. 2-retry cap, then escalate to user.
+**Why:** Agents were claiming "done" without completing all checklist items. The verification step enforces the checklist as a contract. Opt-in by structure — zero overhead for issues without checkboxes.
+**PR:** #473
+**Issue:** #472
