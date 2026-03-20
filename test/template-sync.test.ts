@@ -1,104 +1,229 @@
 /**
- * Template Sync & Casting Parity Tests (Issue #459)
+ * Template sync tests — ensures all template directories stay in sync.
  *
- * Prevents the casting universe mismatch from recurring by verifying:
- * - Universe count in squad.agent.md matches casting-policy.json
- * - All 3 copies of squad.agent.md agree on universe count
- * - Referenced casting-reference.md files exist
- * - casting-policy.json is identical across template dirs
- * - Every allowlisted universe has a capacity entry and vice versa
+ * Canonical source: .squad-templates/
+ * Mirror targets:   templates/, packages/squad-cli/templates/, packages/squad-sdk/templates/
+ * Special target:   .github/agents/ (squad.agent.md only)
+ *
+ * Coverage strategy:
+ *   1. Dynamic enumeration — every file in .squad-templates/ must be byte-for-byte
+ *      identical across all mirror targets (and .github/agents/ for squad.agent.md).
+ *   2. Script execution — `node scripts/sync-templates.mjs` must exit 0.
+ *   3. Negative guard — .github/agents/ must not contain stray synced files.
+ *   4. Semantic checks — universe counts, casting-policy internal consistency.
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
-const ROOT = process.cwd();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, '..');
 
-const SQUAD_TEMPLATES = join(ROOT, '.squad-templates');
-const TEMPLATES = join(ROOT, 'templates');
-const GITHUB_AGENTS = join(ROOT, '.github', 'agents');
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-/** Extract the "N universes available" number from a squad.agent.md file. */
-function extractUniverseCount(filePath: string): number {
-  const content = readFileSync(filePath, 'utf-8');
-  const match = content.match(/(\d+)\s+universes?\s+available/i);
-  if (!match) throw new Error(`No "N universes available" found in ${filePath}`);
-  return parseInt(match[1], 10);
+function readFile(relPath: string): string {
+  return readFileSync(resolve(ROOT, relPath), 'utf-8');
 }
 
-describe('Template sync & casting parity (issue #459)', () => {
-  // --- Test 1: Universe count in squad.agent.md matches casting-policy.json ---
+function readFileBytes(relPath: string): Buffer {
+  return readFileSync(resolve(ROOT, relPath));
+}
 
-  describe('universe count matches casting-policy.json', () => {
-    const policy = JSON.parse(readFileSync(join(SQUAD_TEMPLATES, 'casting-policy.json'), 'utf-8'));
-    const policyCount = policy.allowlist_universes.length;
+function fileExists(relPath: string): boolean {
+  return existsSync(resolve(ROOT, relPath));
+}
 
-    it('.squad-templates/squad.agent.md matches policy', () => {
-      const claimed = extractUniverseCount(join(SQUAD_TEMPLATES, 'squad.agent.md'));
-      expect(claimed).toBe(policyCount);
-    });
-
-    it('templates/squad.agent.md matches policy', () => {
-      const claimed = extractUniverseCount(join(TEMPLATES, 'squad.agent.md'));
-      expect(claimed).toBe(policyCount);
-    });
-
-    it('.github/agents/squad.agent.md matches policy', () => {
-      const claimed = extractUniverseCount(join(GITHUB_AGENTS, 'squad.agent.md'));
-      expect(claimed).toBe(policyCount);
-    });
-  });
-
-  // --- Test 2: All 3 copies agree on universe count ---
-
-  it('all 3 squad.agent.md copies claim the same universe count', () => {
-    const counts = [
-      extractUniverseCount(join(SQUAD_TEMPLATES, 'squad.agent.md')),
-      extractUniverseCount(join(TEMPLATES, 'squad.agent.md')),
-      extractUniverseCount(join(GITHUB_AGENTS, 'squad.agent.md')),
-    ];
-    expect(counts[0]).toBe(counts[1]);
-    expect(counts[1]).toBe(counts[2]);
-  });
-
-  // --- Test 3: casting-reference.md exists where referenced ---
-
-  describe('casting-reference.md exists in template dirs', () => {
-    // casting-reference.md is a template-only file that gets copied to .squad/templates/
-    // during squad init. It belongs in .squad-templates/ and templates/ (both template dirs),
-    // but NOT in .github/agents/ (which only contains squad.agent.md, the live governance file).
-    it('.squad-templates/casting-reference.md exists', () => {
-      expect(existsSync(join(SQUAD_TEMPLATES, 'casting-reference.md'))).toBe(true);
-    });
-
-    it('templates/casting-reference.md exists', () => {
-      expect(existsSync(join(TEMPLATES, 'casting-reference.md'))).toBe(true);
-    });
-  });
-
-  // --- Test 4: casting-policy.json is identical across template dirs ---
-
-  it('casting-policy.json is identical in .squad-templates and templates', () => {
-    const a = JSON.parse(readFileSync(join(SQUAD_TEMPLATES, 'casting-policy.json'), 'utf-8'));
-    const b = JSON.parse(readFileSync(join(TEMPLATES, 'casting-policy.json'), 'utf-8'));
-    expect(a).toEqual(b);
-  });
-
-  // --- Test 5: Every allowlisted universe has a capacity entry and vice versa ---
-
-  it('allowlist_universes and universe_capacity are in sync', () => {
-    const policy = JSON.parse(readFileSync(join(SQUAD_TEMPLATES, 'casting-policy.json'), 'utf-8'));
-    const allowlist: string[] = policy.allowlist_universes;
-    const capacityKeys = Object.keys(policy.universe_capacity);
-
-    // Every allowlisted universe has a capacity entry
-    for (const universe of allowlist) {
-      expect(capacityKeys).toContain(universe);
+/** Recursively collect all file paths relative to `dir`. */
+function collectFiles(dir: string, base = ''): string[] {
+  const entries = readdirSync(resolve(ROOT, dir), { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const rel = base ? join(base, entry.name) : entry.name;
+    if (entry.isDirectory()) {
+      files.push(...collectFiles(join(dir, entry.name), rel));
+    } else {
+      files.push(rel);
     }
-    // No orphaned capacity entries
-    for (const key of capacityKeys) {
-      expect(allowlist).toContain(key);
+  }
+  return files;
+}
+
+/** Extract the universe count from a squad.agent.md file (anchored to list item). */
+function extractUniverseCount(content: string): number | null {
+  const m = content.match(/^-\s+(\d+)\s+universes?\s+available/im);
+  return m ? Number(m[1]) : null;
+}
+
+/** Parse casting-policy.json and return universe names from the allowlist. */
+function parsePolicyUniverses(relPath: string): string[] {
+  const json = JSON.parse(readFile(relPath));
+  return json.allowlist_universes as string[];
+}
+
+/** Parse casting-policy.json and return the capacity map. */
+function parsePolicyCapacity(relPath: string): Record<string, number> {
+  const json = JSON.parse(readFile(relPath));
+  return json.universe_capacity as Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const SOURCE_DIR = '.squad-templates';
+
+const MIRROR_TARGETS = [
+  'templates',
+  'packages/squad-cli/templates',
+  'packages/squad-sdk/templates',
+] as const;
+
+const AGENT_MD_FILE = 'squad.agent.md';
+const AGENT_MD_EXTRA_TARGET = '.github/agents';
+
+const SQUAD_AGENT_LOCATIONS = [
+  `${SOURCE_DIR}/${AGENT_MD_FILE}`,
+  'templates/squad.agent.md',
+  '.github/agents/squad.agent.md',
+  'packages/squad-cli/templates/squad.agent.md',
+  'packages/squad-sdk/templates/squad.agent.md',
+] as const;
+
+const CASTING_POLICY_LOCATIONS = [
+  `${SOURCE_DIR}/casting-policy.json`,
+  'templates/casting-policy.json',
+  'packages/squad-cli/templates/casting-policy.json',
+  'packages/squad-sdk/templates/casting-policy.json',
+] as const;
+
+// ---------------------------------------------------------------------------
+// 1. Dynamic enumeration — byte-for-byte parity for ALL synced files
+// ---------------------------------------------------------------------------
+
+describe('dynamic template enumeration (all synced files)', () => {
+  const sourceFiles = collectFiles(SOURCE_DIR);
+
+  it('.squad-templates/ contains files to sync', () => {
+    expect(sourceFiles.length).toBeGreaterThan(0);
+  });
+
+  for (const relFile of sourceFiles) {
+    const canonicalPath = `${SOURCE_DIR}/${relFile}`;
+
+    for (const target of MIRROR_TARGETS) {
+      const targetPath = `${target}/${relFile}`;
+
+      it(`${targetPath} is byte-for-byte identical to ${canonicalPath}`, () => {
+        expect(fileExists(targetPath), `${targetPath} should exist`).toBe(true);
+        const src = readFileBytes(canonicalPath);
+        const dst = readFileBytes(targetPath);
+        expect(Buffer.compare(src, dst), `${targetPath} content mismatch`).toBe(0);
+      });
+    }
+
+    // squad.agent.md also lives in .github/agents/
+    if (relFile === AGENT_MD_FILE) {
+      const agentPath = `${AGENT_MD_EXTRA_TARGET}/${AGENT_MD_FILE}`;
+
+      it(`${agentPath} is byte-for-byte identical to ${canonicalPath}`, () => {
+        expect(fileExists(agentPath), `${agentPath} should exist`).toBe(true);
+        const src = readFileBytes(canonicalPath);
+        const dst = readFileBytes(agentPath);
+        expect(Buffer.compare(src, dst), `${agentPath} content mismatch`).toBe(0);
+      });
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 2. Script execution — sync-templates.mjs must exit cleanly
+// ---------------------------------------------------------------------------
+
+describe('sync-templates.mjs script execution', () => {
+  it('exits with code 0 (no syntax errors, no crashes)', () => {
+    // execSync throws on non-zero exit codes
+    const output = execSync('node scripts/sync-templates.mjs', {
+      cwd: ROOT,
+      encoding: 'utf-8',
+      timeout: 30_000,
+    });
+    expect(output).toContain('Synced');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3. Negative guard — .github/agents/ should only have squad.agent.md
+// ---------------------------------------------------------------------------
+
+describe('.github/agents/ contains only squad.agent.md', () => {
+  it('has no files beyond squad.agent.md from the sync', () => {
+    const agentDir = resolve(ROOT, AGENT_MD_EXTRA_TARGET);
+    expect(existsSync(agentDir), '.github/agents/ should exist').toBe(true);
+    const files = readdirSync(agentDir);
+    expect(files).toEqual([AGENT_MD_FILE]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 4. squad.agent.md — universe count consistency
+// ---------------------------------------------------------------------------
+
+describe('squad.agent.md universe count', () => {
+  const canonicalPath = SQUAD_AGENT_LOCATIONS[0];
+  const canonicalContent = readFile(canonicalPath);
+  const expectedCount = extractUniverseCount(canonicalContent);
+
+  it('canonical file has a parseable universe count', () => {
+    expect(expectedCount).not.toBeNull();
+    expect(expectedCount).toBeGreaterThan(0);
+  });
+
+  for (const loc of SQUAD_AGENT_LOCATIONS) {
+    it(`${loc} matches canonical universe count (${expectedCount})`, () => {
+      const content = readFile(loc);
+      const count = extractUniverseCount(content);
+      expect(count).toBe(expectedCount);
+    });
+  }
+
+  it('universe count matches casting-policy allowlist length', () => {
+    const policyUniverses = parsePolicyUniverses(CASTING_POLICY_LOCATIONS[0]);
+    expect(expectedCount).toBe(policyUniverses.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. casting-policy.json — content parity & internal consistency
+// ---------------------------------------------------------------------------
+
+describe('casting-policy.json content parity', () => {
+  const canonicalContent = readFile(CASTING_POLICY_LOCATIONS[0]);
+
+  for (const loc of CASTING_POLICY_LOCATIONS) {
+    it(`${loc} matches canonical casting-policy.json`, () => {
+      const content = readFile(loc);
+      expect(content).toBe(canonicalContent);
+    });
+  }
+
+  it('allowlist and capacity map have the same universes', () => {
+    const allowlist = parsePolicyUniverses(CASTING_POLICY_LOCATIONS[0]);
+    const capacity = parsePolicyCapacity(CASTING_POLICY_LOCATIONS[0]);
+    const capacityNames = Object.keys(capacity);
+
+    expect(allowlist.sort()).toEqual(capacityNames.sort());
+  });
+
+  it('all capacities are positive integers', () => {
+    const capacity = parsePolicyCapacity(CASTING_POLICY_LOCATIONS[0]);
+    for (const [name, cap] of Object.entries(capacity)) {
+      expect(cap, `${name} capacity`).toBeGreaterThan(0);
+      expect(Number.isInteger(cap), `${name} capacity is integer`).toBe(true);
     }
   });
 });
