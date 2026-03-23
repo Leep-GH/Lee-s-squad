@@ -174,23 +174,7 @@ Eight working examples from beginner to advanced — casting, governance, stream
 
 ---
 
-### Insider Channel
-
-Want the latest features before they ship?
-
-```bash
-npm install --save-dev @bradygaster/squad-cli@insider
-```
-
-For insider builds:
-
-```bash
-npm install -g @bradygaster/squad-cli@insider
-```
-
----
-
-## Agents Work in Parallel — You Catch Up When You're Ready
+## Agents Work in Parallel— You Catch Up When You're Ready
 
 Squad doesn't work on a human schedule. When you give a task, the coordinator launches every agent that can usefully start — simultaneously.
 
