@@ -355,6 +355,13 @@ async function main(): Promise<void> {
     return;
   }
 
+  // --health flag: show watch instance status and exit
+  if (cmd === 'watch' && args.includes('--health')) {
+    const { getWatchHealth } = await import('./cli/commands/watch/health.js');
+    console.log(getWatchHealth(process.cwd()));
+    return;
+  }
+
   if (cmd === 'triage' || cmd === 'watch') {
     const { runWatch, loadWatchConfig, createDefaultRegistry } = await import('./cli/commands/watch/index.js');
 
@@ -405,6 +412,11 @@ async function main(): Promise<void> {
       ? args[logFileIdx + 1]
       : undefined;
 
+    const authUserIdx = args.indexOf('--auth-user');
+    const authUser = (authUserIdx !== -1 && args[authUserIdx + 1])
+      ? args[authUserIdx + 1]
+      : undefined;
+
     // Build capability overrides from CLI flags and --no-{cap} flags
     const capabilities: Record<string, boolean | Record<string, unknown>> = {};
     const registry = createDefaultRegistry();
@@ -433,13 +445,14 @@ async function main(): Promise<void> {
       verbose,
       dispatchMode,
       logFile,
+      authUser,
       capabilities: Object.keys(capabilities).length > 0 ? capabilities : undefined,
     });
 
     // After parsing all flags, check for positional args that look like prompts.
     // Skip values that follow known value-flags (e.g. "--interval 5" → "5" is not positional).
     const knownValueFlags = new Set([
-      '--interval', '--copilot-flags', '--agent-cmd', '--max-concurrent', '--timeout', '--board-project',
+      '--interval', '--copilot-flags', '--agent-cmd', '--max-concurrent', '--timeout', '--board-project', '--auth-user',
     ]);
     const watchArgStart = args.indexOf(cmd) + 1;
     const watchArgs = args.slice(watchArgStart);

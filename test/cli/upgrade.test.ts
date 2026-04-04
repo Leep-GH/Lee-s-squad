@@ -3,13 +3,13 @@
  * Tests that the upgrade command handles version changes correctly
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdir, rm, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync } from 'fs';
 import { randomBytes } from 'crypto';
 import { runInit } from '@bradygaster/squad-cli/core/init';
-import { runUpgrade, ensureGitattributes, ensureGitignore, ensureDirectories, ensureCastingDefaults } from '@bradygaster/squad-cli/core/upgrade';
+import { runUpgrade, ensureGitattributes, ensureGitignore, ensureDirectories, ensureCastingDefaults, selfUpgradeCli } from '@bradygaster/squad-cli/core/upgrade';
 import { getPackageVersion } from '@bradygaster/squad-cli/core/version';
 
 const TEST_ROOT = join(process.cwd(), `.test-cli-upgrade-${randomBytes(4).toString('hex')}`);
@@ -353,6 +353,10 @@ describe('CLI: upgrade command', () => {
     expect(forceResult.filesUpdated.length).toBeGreaterThan(0);
     expect(forceResult.filesUpdated).toContain('squad.agent.md');
   });
+
+  /* ── --self flag (selfUpgradeCli) ──────────────────────────── */
+
+  it.todo('selfUpgradeCli shells out with correct package tag (ESM spy limitation)');
 
   /* ── ensureDirectories includes .squad/casting ──────────────── */
 
