@@ -187,7 +187,7 @@ Write-Host ""
 Write-Host "  ✓ Project ready at: $ProjectDir" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Your team:" -ForegroundColor White
-Write-Host "    Architect - Tech Lead (start here: hand Architect your PRD)" -ForegroundColor DarkCyan
+Write-Host "    Architect - Tech Lead" -ForegroundColor DarkCyan
 Write-Host "    Backend   - Backend Developer" -ForegroundColor DarkCyan
 Write-Host "    Frontend  - Frontend Developer" -ForegroundColor DarkCyan
 Write-Host "    Data      - Data Engineer" -ForegroundColor DarkCyan
@@ -196,6 +196,5 @@ Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor White
 Write-Host "    1. cd $Name" -ForegroundColor DarkGray
 Write-Host "    2. Open in VS Code: code ." -ForegroundColor DarkGray
-Write-Host "    3. In Copilot Chat: select Architect from dropdown" -ForegroundColor DarkGray
-Write-Host "       Then describe your idea or paste your PRD" -ForegroundColor DarkGray
+Write-Host "    3. Copilot Chat: select Architect, paste your PRD" -ForegroundColor DarkGray
 Write-Host ""
