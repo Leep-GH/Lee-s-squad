@@ -1,10 +1,8 @@
-# Project Context
+﻿# Project History
 
-- **Owner:** {user name}
-- **Project:** {project description}
-- **Stack:** {languages, frameworks, tools}
-- **Created:** {timestamp}
+- **Project:** Lee's Squad
 
 ## Learnings
 
-<!-- Append new learnings below. Each entry is something lasting about the project. -->
+<!-- Scribe appends learnings here -->
+
