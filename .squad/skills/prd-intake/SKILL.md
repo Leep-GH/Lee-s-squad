@@ -1,17 +1,19 @@
 ---
 name: "prd-intake"
-description: "How Maven receives and processes a PRD or feature request from the Product Owner"
+description: "How Architect (Tech Lead) receives a PRD from non-technical users, translates it to sound technical decisions, and produces a build plan"
 domain: "planning"
 confidence: "high"
 source: "team-convention"
-applies_to: ["maven"]
+applies_to: ["architect"]
 ---
 
 ## Context
 
-This skill governs how Architect (Tech Lead) handles a PRD, feature request, or "I want to build X" message from the Product Owner. The goal is to prevent vague requirements from becoming bad code.
+This skill governs how Architect (Tech Lead) handles a PRD, feature request, or "I want to build X" message from a user who may not be technically trained. The goal is to **bridge the gap between vision and reality** — understand what they *really* need, challenge assumptions that don't make technical sense, and guide them to decisions that will actually work.
 
-**Cardinal rule: No code is written until the Product Owner has approved a written build plan.**
+**Cardinal rules:**
+1. **No code is written until the user has approved a written build plan.**
+2. **Your job is to be a tech translator** — ask the right questions, challenge assumptions, educate about trade-offs, and steer toward sound decisions.
 
 ## The PRD Intake Process
 
@@ -27,18 +29,25 @@ A PRD is ready to plan against when it has:
 - [ ] Tech constraints or preferences (stack, existing services, APIs?)
 - [ ] Definition of done (how will we know it works?)
 
-### Step 3 — Ask Targeted Questions
+### Step 3 — Ask Targeted Questions (Be a Tech Translator)
 
-Ask **3-5 questions maximum**. Not more. Choose the ones that would fundamentally change the architecture if answered differently.
+Your job is to **understand what the user really needs and guide them to sound technical decisions**. You are the tech translator between their vision and implementable code.
+
+Ask **3-5 questions maximum**. Choose the ones that would fundamentally change the architecture if answered differently.
+
+**If the PRD suggests a technical approach that doesn't make sense**, ask why and propose alternatives. For example:
+- If they say "use microservices" for a 4-function todo app, ask: *"Microservices add complexity. For something this simple, why not monolith first?"*
+- If they ask for "real-time sync" but also "works offline," help them understand the trade-off.
+- If they're vague about the user, dig in: *"Who actually uses this? 5 people or 50,000? That changes everything."*
 
 Good questions:
-- "Is this a new project or adding to an existing codebase?"
-- "Do you have a database technology preference, or should I recommend one based on the requirements?"
-- "Who are the users — public, authenticated, or internal only?"
-- "Are there any third-party integrations required?"
-- "What's your priority: get something working fast, or build it to scale from day one?"
+- "What problem are you solving?" (get to the goal, not just the feature list)
+- "Who uses this, and what's their workflow?" (constraints, tech compatibility)
+- "Is this new or adding to an existing codebase?" (greenfield vs brownfield)
+- "What does success look like?" (metrics, acceptance criteria)
+- "What's your priority: speed to launch, or built to scale?"
 
-Do NOT ask questions whose answers don't change the plan.
+Do NOT ask questions whose answers don't change the plan. **Challenge assumptions, educate about trade-offs, and steer toward decisions that will actually work.**
 
 ### Step 4 — Produce the Build Plan
 
