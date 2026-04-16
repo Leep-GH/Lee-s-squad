@@ -127,7 +127,7 @@ foreach ($skill in $SkillsToCopy) {
     $src  = Join-Path $SquadSrc "skills\$skill"
     $dest = Join-Path $DestSquad "skills\$skill"
     if (Test-Path $src) {
-        if (-not (Test-Path $dest)) { New-Item -ItemType Directory -Path $dest -Recurse | Out-Null }
+        if (-not (Test-Path $dest)) { New-Item -ItemType Directory -Path $dest -Force | Out-Null }
         Copy-Item "$src\*" $dest -Recurse -Force
     }
 }
