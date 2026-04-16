@@ -15,7 +15,7 @@ Open your project in VS Code, then in the terminal:
 
 ```powershell
 squad init
-& "C:\Users\leep1\OneDrive\ドキュメント\GitHub\squad\scripts\new-project.ps1" -Existing
+& "C:\Users\leep1\GitHub\Lee-s-squad\scripts\new-project.ps1" -Existing
 ```
 
 That's it. Your agents are now installed.
