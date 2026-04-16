@@ -1,68 +1,99 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Bootstrap a new project with your Squad build team.
+    Bootstrap a project with Lee's Squad build team.
 
 .DESCRIPTION
-    Creates a new project directory, runs `squad init`, then overlays your
-    custom team configuration from this repo's .squad/ directory.
-
-    Result: a new project folder ready to use with Lee's Squad — Architect, Backend,
-    Frontend, Data, QA, and Scribe — your PRD-driven build team.
+    Two modes:
+      -Name "my-app"   Creates a new folder, runs squad init, overlays Lee's Squad agents.
+      -Existing        Overlays Lee's Squad agents into the current folder (must already have squad init run).
 
 .EXAMPLE
     .\scripts\new-project.ps1 -Name "my-app"
     .\scripts\new-project.ps1 -Name "my-api" -Path "C:\Projects"
+    .\scripts\new-project.ps1 -Existing
 
 .PARAMETER Name
-    The project name (used as the folder name).
+    The project name (used as the folder name). Required unless -Existing is used.
 
 .PARAMETER Path
     Parent directory where the project folder will be created. Defaults to the current directory.
+
+.PARAMETER Existing
+    Apply Lee's Squad agents to the current directory (must have run squad init first).
 #>
 
 param(
-    [Parameter(Mandatory=$true)]
     [string]$Name,
 
-    [string]$Path = (Get-Location).Path
+    [string]$Path = (Get-Location).Path,
+
+    [switch]$Existing
 )
+
+if (-not $Existing -and -not $Name) {
+    Write-Host "  ERROR: Provide -Name for a new project, or -Existing to activate in the current folder." -ForegroundColor Red
+    exit 1
+}
 
 $ErrorActionPreference = "Stop"
 
 $SquadRepoDir = $PSScriptRoot | Split-Path -Parent
-$ProjectDir   = Join-Path $Path $Name
 $SquadSrc     = Join-Path $SquadRepoDir ".squad"
 
-Write-Host ""
-Write-Host "  Creating project: $Name" -ForegroundColor Cyan
-Write-Host "  Location:         $ProjectDir" -ForegroundColor DarkGray
-Write-Host ""
-
-# ── 1. Create project directory ───────────────────────────────────────────────
-if (Test-Path $ProjectDir) {
-    Write-Host "  ERROR: '$ProjectDir' already exists. Use a different name." -ForegroundColor Red
-    exit 1
-}
-New-Item -ItemType Directory -Path $ProjectDir | Out-Null
-
-# ── 2. Initialise git ─────────────────────────────────────────────────────────
-Set-Location $ProjectDir
-git init --quiet
-git checkout -b dev 2>$null
-
-# ── 3. Run squad init ─────────────────────────────────────────────────────────
-Write-Host "  Running squad init..." -ForegroundColor DarkGray
-squad init --no-interactive 2>$null
-if ($LASTEXITCODE -ne 0) {
-    # Some versions prompt interactively; try with piped input
-    Write-Output "y" | squad init 2>$null
+if ($Existing) {
+    # ── Existing project mode ─────────────────────────────────────────────────
+    $ProjectDir = (Get-Location).Path
+    $Name = Split-Path $ProjectDir -Leaf
+    Write-Host ""
+    Write-Host "  Activating Lee's Squad in: $ProjectDir" -ForegroundColor Cyan
+    Write-Host ""
+    if (-not (Test-Path (Join-Path $ProjectDir ".squad"))) {
+        Write-Host "  ERROR: No .squad folder found. Run 'squad init' first, then re-run this script with -Existing." -ForegroundColor Red
+        exit 1
+    }
+} else {
+    # ── New project mode ──────────────────────────────────────────────────────
+    $ProjectDir = Join-Path $Path $Name
+    Write-Host ""
+    Write-Host "  Creating project: $Name" -ForegroundColor Cyan
+    Write-Host "  Location:         $ProjectDir" -ForegroundColor DarkGray
+    Write-Host ""
+    if (Test-Path $ProjectDir) {
+        Write-Host "  ERROR: '$ProjectDir' already exists. Use a different name or -Existing." -ForegroundColor Red
+        exit 1
+    }
+    New-Item -ItemType Directory -Path $ProjectDir | Out-Null
+    Set-Location $ProjectDir
+    git init --quiet
+    git checkout -b dev 2>$null
+    Write-Host "  Running squad init..." -ForegroundColor DarkGray
+    squad init --no-interactive 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output "y" | squad init 2>$null
+    }
 }
 
 # ── 4. Overlay your custom .squad/ configuration ──────────────────────────────
 Write-Host "  Applying custom team configuration..." -ForegroundColor DarkGray
 
-$DestSquad = Join-Path $ProjectDir ".squad"
+$DestSquad  = Join-Path $ProjectDir ".squad"
+$GithubSrc  = Join-Path $SquadRepoDir ".github"
+$DestGithub = Join-Path $ProjectDir ".github"
+
+# Copy .github/agents/ — these populate the VS Code agent dropdown
+$GithubAgentsSrc  = Join-Path $GithubSrc "agents"
+$GithubAgentsDest = Join-Path $DestGithub "agents"
+if (-not (Test-Path $GithubAgentsDest)) { New-Item -ItemType Directory -Path $GithubAgentsDest -Force | Out-Null }
+$AgentFiles = @("architect.agent.md","backend.agent.md","frontend.agent.md","data.agent.md","qa.agent.md","squad.agent.md")
+foreach ($f in $AgentFiles) {
+    $src = Join-Path $GithubAgentsSrc $f
+    if (Test-Path $src) { Copy-Item $src $GithubAgentsDest -Force }
+}
+
+# Copy .github/copilot-instructions.md
+$copilotSrc = Join-Path $GithubSrc "copilot-instructions.md"
+if (Test-Path $copilotSrc) { Copy-Item $copilotSrc $DestGithub -Force }
 
 # Copy agent charters (your 5 agents + scribe)
 $AgentsToCopy = @("architect","backend","frontend","data","qa","scribe")
