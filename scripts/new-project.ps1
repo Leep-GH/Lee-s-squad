@@ -42,7 +42,7 @@ $SquadRepoDir = $PSScriptRoot | Split-Path -Parent
 $SquadSrc     = Join-Path $SquadRepoDir ".squad"
 
 if ($Existing) {
-    # ── Existing project mode ─────────────────────────────────────────────────
+    #  Existing project mode 
     $ProjectDir = (Get-Location).Path
     $Name = Split-Path $ProjectDir -Leaf
     Write-Host ""
@@ -53,7 +53,7 @@ if ($Existing) {
         exit 1
     }
 } else {
-    # ── New project mode ──────────────────────────────────────────────────────
+    #  New project mode 
     $ProjectDir = Join-Path $Path $Name
     Write-Host ""
     Write-Host "  Creating project: $Name" -ForegroundColor Cyan
@@ -74,14 +74,14 @@ if ($Existing) {
     }
 }
 
-# ── 4. Overlay your custom .squad/ configuration ──────────────────────────────
+#  4. Overlay your custom .squad/ configuration 
 Write-Host "  Applying custom team configuration..." -ForegroundColor DarkGray
 
 $DestSquad  = Join-Path $ProjectDir ".squad"
 $GithubSrc  = Join-Path $SquadRepoDir ".github"
 $DestGithub = Join-Path $ProjectDir ".github"
 
-# Copy .github/agents/ — these populate the VS Code agent dropdown
+# Copy .github/agents/  these populate the VS Code agent dropdown
 $GithubAgentsSrc  = Join-Path $GithubSrc "agents"
 $GithubAgentsDest = Join-Path $DestGithub "agents"
 if (-not (Test-Path $GithubAgentsDest)) { New-Item -ItemType Directory -Path $GithubAgentsDest -Force | Out-Null }
@@ -132,7 +132,7 @@ foreach ($skill in $SkillsToCopy) {
     }
 }
 
-# ── 5. Write a minimal squad.config.ts ───────────────────────────────────────
+#  5. Write a minimal squad.config.ts 
 $squadConfig = @"
 import { defineSquad, defineTeam, defineAgent, defineRouting, defineCasting } from '@bradygaster/squad-sdk';
 
@@ -142,7 +142,7 @@ export default defineSquad({
   team: defineTeam({
     name: '$Name',
     description: 'PRD-driven build team for $Name.',
-    projectContext: '- **Stack:** TBD — Architect will confirm during planning\n- **Workflow:** PRD → Architect → specialists → merge to dev',
+    projectContext: '- **Stack:** TBD  Architect will confirm during planning\n- **Workflow:** PRD  Architect  specialists  merge to dev',
     members: ['architect', 'backend', 'frontend', 'data', 'qa', 'scribe'],
   }),
 
@@ -176,15 +176,15 @@ export default defineSquad({
 
 Set-Content -Path (Join-Path $ProjectDir "squad.config.ts") -Value $squadConfig -Encoding UTF8
 
-# ── 6. Remove old default agent folders that don't belong ───────────────────
+#  6. Remove old default agent folders that don't belong 
 $DefaultAgents = @("scribe","ralph","_alumni")
 Get-ChildItem (Join-Path $DestSquad "agents") -Directory |
     Where-Object { $_.Name -notin ($AgentsToCopy + $DefaultAgents) } |
     ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
 
-# ── 7. Done ───────────────────────────────────────────────────────────────────
+#  7. Done 
 Write-Host ""
-Write-Host "  ✓ Project ready at: $ProjectDir" -ForegroundColor Green
+Write-Host "   Project ready at: $ProjectDir" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Your team:" -ForegroundColor White
 Write-Host "    Architect - Tech Lead" -ForegroundColor DarkCyan
