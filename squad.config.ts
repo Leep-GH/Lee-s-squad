@@ -24,7 +24,7 @@ export default defineSquad({
       '- **Workflow:** PRD → Architect plans → specialists build → QA tests\n' +
       '- **You are:** Product Owner — you set direction, approve plans, and stay out of the code\n' +
       '- **Stack:** Determined per-project by Architect during planning',
-    members: ['architect', 'backend', 'frontend', 'data', 'qa', 'scribe'],
+    members: ['architect', 'designer', 'backend', 'frontend', 'data', 'qa', 'scribe'],
   }),
 
   agents: [
@@ -44,6 +44,12 @@ export default defineSquad({
       name: 'frontend',
       role: 'Frontend Developer',
       description: 'UI components, pages, client-side state, API integration, forms, responsive layout.',
+      status: 'active',
+    }),
+    defineAgent({
+      name: 'designer',
+      role: 'Design Lead',
+      description: 'UI/UX design, component specs, design systems, visual consistency, accessibility.',
       status: 'active',
     }),
     defineAgent({
@@ -79,9 +85,9 @@ export default defineSquad({
         description: 'Backend implementation — APIs, auth, integrations, business logic',
       },
       {
-        pattern: 'ui|component|page|frontend|react|vue|angular|css|style|form|layout',
-        agents: ['@frontend'],
-        description: 'Frontend implementation — components, pages, client state',
+        pattern: 'design|ui|ux|component|page|frontend|react|vue|angular|css|style|form|layout|wireframe|mockup',
+        agents: ['@designer', '@frontend'],
+        description: 'Design and frontend — Designer specs, Frontend implements',
       },
       {
         pattern: 'database|schema|migration|query|orm|prisma|sql|index|table|model',

@@ -85,7 +85,7 @@ $DestGithub = Join-Path $ProjectDir ".github"
 $GithubAgentsSrc  = Join-Path $GithubSrc "agents"
 $GithubAgentsDest = Join-Path $DestGithub "agents"
 if (-not (Test-Path $GithubAgentsDest)) { New-Item -ItemType Directory -Path $GithubAgentsDest -Force | Out-Null }
-$AgentFiles = @("architect.agent.md","backend.agent.md","frontend.agent.md","data.agent.md","qa.agent.md","squad.agent.md")
+$AgentFiles = @("architect.agent.md","designer.agent.md","backend.agent.md","frontend.agent.md","data.agent.md","qa.agent.md","squad.agent.md")
 foreach ($f in $AgentFiles) {
     $src = Join-Path $GithubAgentsSrc $f
     if (Test-Path $src) { Copy-Item $src $GithubAgentsDest -Force }
@@ -96,7 +96,7 @@ $copilotSrc = Join-Path $GithubSrc "copilot-instructions.md"
 if (Test-Path $copilotSrc) { Copy-Item $copilotSrc $DestGithub -Force }
 
 # Copy agent charters (your 5 agents + scribe)
-$AgentsToCopy = @("architect","backend","frontend","data","qa","scribe")
+$AgentsToCopy = @("architect","designer","backend","frontend","data","qa","scribe")
 foreach ($agent in $AgentsToCopy) {
     $src  = Join-Path $SquadSrc "agents\$agent"
     $dest = Join-Path $DestSquad "agents\$agent"

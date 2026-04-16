@@ -5,8 +5,9 @@
 | Work Type | Agent | Examples |
 |-----------|-------|----------|
 | PRD intake, planning, architecture | Architect 🧭 | Feature specs, build plans, tech decisions, delegation, scope questions |
+| UI/UX design | Designer 🎨 | Wireframes, component specs, design systems, visual design, accessibility |
 | Backend development | Backend 🔨 | APIs, auth, server logic, integrations, background jobs, data access |
-| Frontend development | Frontend 🎨 | UI components, pages, routing, client state, forms, API integration |
+| Frontend development | Frontend 💻 | UI components, pages, routing, client state, forms, API integration |
 | Data layer | Data 🗄️ | Schema design, migrations, ORM models, query optimisation, indexes |
 | Quality assurance | QA 🛡️ | Tests (unit/integration/e2e), acceptance sign-off, CI quality gates |
 | Documentation & decisions | Scribe 📋 | Session logs, decision merging — silent background only |

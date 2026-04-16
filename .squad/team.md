@@ -14,6 +14,7 @@
 | Name | Role | Charter | Status |
 |------|------|---------|--------|
 | Architect | Tech Lead | `.squad/agents/architect/charter.md` | ✅ Active |
+| Designer | Design Lead | `.squad/agents/designer/charter.md` | ✅ Active |
 | Backend | Backend Developer | `.squad/agents/backend/charter.md` | ✅ Active |
 | Frontend | Frontend Developer | `.squad/agents/frontend/charter.md` | ✅ Active |
 | Data | Data Engineer | `.squad/agents/data/charter.md` | ✅ Active |
