@@ -122,6 +122,8 @@ When triggered:
 
 ### Personal Squad (Ambient Discovery)
 
+> Full algorithm and Ghost Protocol rules: `.copilot/skills/personal-squad/SKILL.md`
+
 Before assembling the session cast, check for personal agents:
 
 1. **Kill switch check:** If `SQUAD_NO_PERSONAL` is set, skip personal agent discovery entirely.
@@ -353,6 +355,8 @@ prompt: |
 For read-only queries, use the explore agent: `agent_type: "explore"` with `"You are {Name}, the {Role}. CURRENT_DATETIME: {current_datetime} — {question} TEAM ROOT: {team_root}"`
 
 ### Per-Agent Model Selection
+
+> Full 4-layer hierarchy, role-to-model table, and fallback chains: `.copilot/skills/model-selection/SKILL.md`
 
 Before spawning an agent, determine which model to use. Check these layers in order — first match wins:
 

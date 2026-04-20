@@ -19,6 +19,7 @@
 | Frontend | Frontend Developer | `.squad/agents/frontend/charter.md` | ✅ Active |
 | Data | Data Engineer | `.squad/agents/data/charter.md` | ✅ Active |
 | QA | QA Engineer | `.squad/agents/qa/charter.md` | ✅ Active |
+| DevOps | Infrastructure & Delivery Engineer | `.squad/agents/devops/charter.md` | ✅ Active |
 | Scribe | Session Logger | `.squad/agents/scribe/charter.md` | 📋 Silent |
 | Ralph | Work Monitor | — | 🔄 Monitor |
 

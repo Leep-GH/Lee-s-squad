@@ -22,3 +22,29 @@ jobs:
 
       - name: Run tests
         run: node --test test/*.test.cjs
+
+  template-drift:
+    name: Template Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check template drift and structural invariants
+        run: node scripts/check-template-drift.mjs
+
+  config-sync:
+    name: Config Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check squad.config.ts in sync with .squad/ and .github/agents/
+        run: node scripts/check-squad-config-sync.mjs

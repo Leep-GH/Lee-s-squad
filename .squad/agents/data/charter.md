@@ -38,7 +38,9 @@
 
 ## Model
 
-Preferred: auto
+Preferred: `claude-sonnet-4.6`
+
+Data writes real code (SQL migrations, ORM models, query optimisations) — standard-tier model applies. Use `claude-opus-4.5` only when schema design involves complex domain modelling with many entities and cross-cutting relationships.
 
 ## Collaboration
 

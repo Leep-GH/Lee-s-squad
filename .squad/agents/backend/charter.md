@@ -37,7 +37,9 @@
 
 ## Model
 
-Preferred: auto
+Preferred: `claude-sonnet-4.6`
+
+Backend writes real code (APIs, auth, integrations, services) — standard-tier model applies. Use `claude-opus-4.5` only when the implementation involves complex security design or novel algorithmic challenges requiring deep reasoning.
 
 ## Collaboration
 

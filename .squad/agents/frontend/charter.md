@@ -37,7 +37,9 @@
 
 ## Model
 
-Preferred: auto
+Preferred: `claude-sonnet-4.6`
+
+Frontend writes real code (components, pages, state, API wiring) — standard-tier model applies. Use `claude-opus-4.5` only when the UI has complex accessibility requirements or advanced state management patterns that require deep reasoning.
 
 ## Collaboration
 

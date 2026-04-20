@@ -24,7 +24,7 @@ export default defineSquad({
       '- **Workflow:** PRD → Architect plans → specialists build → QA tests\n' +
       '- **You are:** Product Owner — you set direction, approve plans, and stay out of the code\n' +
       '- **Stack:** Determined per-project by Architect during planning',
-    members: ['architect', 'designer', 'backend', 'frontend', 'data', 'qa', 'scribe'],
+    members: ['architect', 'designer', 'backend', 'frontend', 'data', 'qa', 'devops', 'scribe'],
   }),
 
   agents: [
@@ -65,6 +65,12 @@ export default defineSquad({
       status: 'active',
     }),
     defineAgent({
+      name: 'devops',
+      role: 'Infrastructure & Delivery Engineer',
+      description: 'CI/CD pipelines, containerisation, deployment, environment config, secrets structure, release automation, observability.',
+      status: 'active',
+    }),
+    defineAgent({
       name: 'scribe',
       role: 'Scribe',
       description: 'Session logging and decision merging. Silent background agent.',
@@ -98,6 +104,11 @@ export default defineSquad({
         pattern: 'test|spec|coverage|e2e|qa|quality|acceptance|bug|regression',
         agents: ['@qa'],
         description: 'Testing — strategy, writing tests, acceptance sign-off',
+      },
+      {
+        pattern: 'ci|cd|pipeline|docker|deploy|deployment|infrastructure|infra|helm|terraform|kubernetes|k8s|container|environment|env|release|publish|npm|changeset|workflow|github-actions|observability|monitoring|logging|health-check|sentry|datadog',
+        agents: ['@devops'],
+        description: 'Infrastructure & delivery — CI/CD, Docker, deployment, environment, release engineering',
       },
       {
         pattern: 'full-stack|fullstack|feature.*end-to-end',

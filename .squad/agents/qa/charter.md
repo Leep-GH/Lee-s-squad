@@ -38,7 +38,9 @@
 
 ## Model
 
-Preferred: auto
+Preferred: `claude-sonnet-4.6`
+
+QA writes real test code (unit, integration, e2e) and reviews PRs for coverage gaps — standard-tier model applies. Use `claude-haiku-4.5` only for lightweight checklist-style reviews where no code is written.
 
 ## Collaboration
 

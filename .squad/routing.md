@@ -10,6 +10,7 @@
 | Frontend development | Frontend 💻 | UI components, pages, routing, client state, forms, API integration |
 | Data layer | Data 🗄️ | Schema design, migrations, ORM models, query optimisation, indexes |
 | Quality assurance | QA 🛡️ | Tests (unit/integration/e2e), acceptance sign-off, CI quality gates |
+| Infrastructure & delivery | DevOps ⚙️ | CI/CD pipelines, Docker, deployment, environment config, release engineering, observability |
 | Documentation & decisions | Scribe 📋 | Session logs, decision merging — silent background only |
 
 ## Routing Principles

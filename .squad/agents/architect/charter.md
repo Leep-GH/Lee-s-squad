@@ -54,7 +54,9 @@ If someone asks me to write implementation code, I'll write the spec and hand it
 
 ## Model
 
-Preferred: auto
+Preferred: `claude-sonnet-4.6`
+
+Architect writes design documents, evaluates trade-offs, and creates GitHub issues — tasks that require strong reasoning but not maximum context window. Use `claude-opus-4.5` only when the PRD is extremely large (>10k tokens) or when the problem space requires advanced multi-step reasoning. Use `claude-haiku-4.5` for status checks and lightweight routing decisions.
 
 ## Collaboration
 
