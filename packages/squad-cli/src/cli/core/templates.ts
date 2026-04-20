@@ -36,6 +36,50 @@ export const TEMPLATE_MANIFEST: TemplateFile[] = [
     overwriteOnUpgrade: true,
     description: 'Squad coordinator agent prompt',
   },
+
+  // Specialist agent prompts (squad-owned, overwrite on upgrade)
+  {
+    source: 'agents/architect.agent.md',
+    destination: '../.github/agents/architect.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'Architect agent prompt',
+  },
+  {
+    source: 'agents/backend.agent.md',
+    destination: '../.github/agents/backend.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'Backend agent prompt',
+  },
+  {
+    source: 'agents/frontend.agent.md',
+    destination: '../.github/agents/frontend.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'Frontend agent prompt',
+  },
+  {
+    source: 'agents/designer.agent.md',
+    destination: '../.github/agents/designer.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'Designer agent prompt',
+  },
+  {
+    source: 'agents/data.agent.md',
+    destination: '../.github/agents/data.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'Data agent prompt',
+  },
+  {
+    source: 'agents/qa.agent.md',
+    destination: '../.github/agents/qa.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'QA agent prompt',
+  },
+  {
+    source: 'agents/devops.agent.md',
+    destination: '../.github/agents/devops.agent.md',
+    overwriteOnUpgrade: true,
+    description: 'DevOps agent prompt',
+  },
   
   // Casting system (squad-owned, overwrite on upgrade)
   {
