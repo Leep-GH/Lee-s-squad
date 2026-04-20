@@ -37,24 +37,31 @@ squad doctor    # Validate setup
 
 ## Quick Start
 
-Get a working AI team in three steps:
+Get a working AI team in one step:
 
 ```bash
-# 1. Initialize Squad in your repo
+# Initialize Squad in your repo
 squad init
+```
 
-# 2. Launch the interactive shell and talk to your team
+The `init` command creates a `.squad/` directory with all default agents and configuration, then opens VS Code's Copilot agent picker. You'll have immediate access to:
+
+- **Coordinator** (`@squad`) — orchestrates the team
+- **7 Specialists** — `@architect`, `@backend`, `@frontend`, `@designer`, `@data`, `@qa`, `@devops`
+
+All agents are ready to work. Chat with them in VS Code or use the CLI:
+
+```bash
+# Launch the interactive shell
 squad
 ```
 
-The `init` command creates a `.squad/` directory with default agents and configuration. Then `squad` opens a REPL where you can chat with agents, assign work, and monitor progress.
-
-**Example:**
+**Example in VS Code Copilot Chat:**
 
 ```
-squad > @Neo, review the authentication module
-squad > Trinity, add unit tests for the login page
-squad > /status    # See what's in progress
+@architect Design the API for the new feature
+@backend Implement the endpoints  
+@frontend Build the UI components
 ```
 
 ## Commands Reference
